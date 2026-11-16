@@ -1,0 +1,292 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Core primitives
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidOptionalString(data, field, maxLen) {
+      return !(field in data) || (data[field] is string && data[field].size() <= maxLen);
+    }
+
+    function isActiveAppUser(userId) {
+      return isValidId(userId) &&
+        exists(/databases/$(database)/documents/app_users/$(userId)) &&
+        get(/databases/$(database)/documents/app_users/$(userId)).data.isActive == true;
+    }
+
+    function isOwnerAppUser(userId) {
+      return isActiveAppUser(userId) &&
+        get(/databases/$(database)/documents/app_users/$(userId)).data.role == 'owner';
+    }
+
+    function hasParentLapak(lapakId) {
+      return isValidId(lapakId) &&
+        exists(/databases/$(database)/documents/lapak/$(lapakId));
+    }
+
+    // Validation blueprint: AppUser
+    function isValidAppUser(data, userId) {
+      return data.keys().hasAll([
+          'id', 'username', 'fullName', 'role', 'passwordHash', 'salt',
+          'isActive', 'createdAtDate', 'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'username', 'fullName', 'role', 'passwordHash', 'salt',
+          'isActive', 'createdById', 'createdAtDate', 'createdAt', 'updatedAt'
+        ]) &&
+        data.id is string && data.id == userId && isValidId(data.id) &&
+        data.username is string && data.username == userId && data.username.size() >= 1 && data.username.size() <= 64 &&
+        data.fullName is string && data.fullName.size() >= 1 && data.fullName.size() <= 120 &&
+        data.role in ['owner', 'kasir'] &&
+        data.passwordHash is string && data.passwordHash.size() >= 64 && data.passwordHash.size() <= 128 &&
+        data.salt is string && data.salt.size() >= 8 && data.salt.size() <= 64 &&
+        data.isActive is bool &&
+        (!('createdById' in data) || (data.createdById is string && data.createdById.size() >= 1 && data.createdById.size() <= 128)) &&
+        data.createdAtDate is string && data.createdAtDate.size() >= 1 && data.createdAtDate.size() <= 64 &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    // Validation blueprint: LapakWorkspace
+    function isValidLapakWorkspace(data, lapakId) {
+      return data.keys().hasAll(['id', 'name', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['id', 'name', 'createdAt', 'updatedAt']) &&
+        data.id is string && data.id == lapakId && data.id.size() >= 1 && data.id.size() <= 64 &&
+        data.name is string && data.name.size() >= 1 && data.name.size() <= 120 &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    // Validation blueprint: CoffeePurchase
+    function isValidPurchase(data, lapakId, purchaseId) {
+      return data.keys().hasAll([
+          'id', 'lapakId', 'createdById', 'receiptNumber', 'farmerName', 'coffeeType',
+          'weightKg', 'moisturePercent', 'buyPricePerKg', 'totalPayment', 'date',
+          'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'lapakId', 'createdById', 'createdByName', 'receiptNumber', 'farmerName', 'coffeeType',
+          'weightKg', 'moisturePercent', 'buyPricePerKg', 'totalPayment',
+          'sourceDepositId', 'sourceDepositNumber', 'date', 'notes',
+          'createdAt', 'updatedAt'
+        ]) &&
+        data.id is string && data.id == purchaseId && isValidId(data.id) &&
+        data.lapakId is string && data.lapakId == lapakId && isValidId(data.lapakId) &&
+        data.createdById is string && isValidId(data.createdById) &&
+        isValidOptionalString(data, 'createdByName', 120) &&
+        data.receiptNumber is string && data.receiptNumber.size() >= 1 && data.receiptNumber.size() <= 64 &&
+        data.farmerName is string && data.farmerName.size() >= 1 && data.farmerName.size() <= 150 &&
+        data.coffeeType is string && data.coffeeType.size() >= 1 && data.coffeeType.size() <= 120 &&
+        data.weightKg is number && data.weightKg > 0 &&
+        data.moisturePercent is number && data.moisturePercent >= 0 && data.moisturePercent <= 100 &&
+        data.buyPricePerKg is number && data.buyPricePerKg >= 0 &&
+        data.totalPayment is number && data.totalPayment >= 0 &&
+        (!('sourceDepositId' in data) || isValidId(data.sourceDepositId)) &&
+        isValidOptionalString(data, 'sourceDepositNumber', 64) &&
+        data.date is string && data.date.size() >= 1 && data.date.size() <= 64 &&
+        isValidOptionalString(data, 'notes', 500) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    // Validation blueprint: CoffeeDeposit
+    function isValidDeposit(data, lapakId, depositId) {
+      return data.keys().hasAll([
+          'id', 'lapakId', 'createdById', 'depositNumber', 'farmerName', 'coffeeType',
+          'initialWeightKg', 'remainingWeightKg', 'moisturePercent', 'status', 'date',
+          'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'lapakId', 'createdById', 'createdByName', 'depositNumber', 'farmerName', 'coffeeType',
+          'initialWeightKg', 'remainingWeightKg', 'moisturePercent', 'status', 'settlements',
+          'date', 'notes', 'createdAt', 'updatedAt'
+        ]) &&
+        data.id is string && data.id == depositId && isValidId(data.id) &&
+        data.lapakId is string && data.lapakId == lapakId && isValidId(data.lapakId) &&
+        data.createdById is string && isValidId(data.createdById) &&
+        isValidOptionalString(data, 'createdByName', 120) &&
+        data.depositNumber is string && data.depositNumber.size() >= 1 && data.depositNumber.size() <= 64 &&
+        data.farmerName is string && data.farmerName.size() >= 1 && data.farmerName.size() <= 150 &&
+        data.coffeeType is string && data.coffeeType.size() >= 1 && data.coffeeType.size() <= 120 &&
+        data.initialWeightKg is number && data.initialWeightKg > 0 &&
+        data.remainingWeightKg is number && data.remainingWeightKg >= 0 && data.remainingWeightKg <= data.initialWeightKg &&
+        data.moisturePercent is number && data.moisturePercent >= 0 && data.moisturePercent <= 100 &&
+        data.status in ['AKTIF', 'SELESAI'] &&
+        (!('settlements' in data) || (data.settlements is list && data.settlements.size() <= 50 && (data.settlements.size() == 0 || data.settlements[0] is map))) &&
+        data.date is string && data.date.size() >= 1 && data.date.size() <= 64 &&
+        isValidOptionalString(data, 'notes', 500) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    // Validation blueprint: WarehouseSale
+    function isValidSale(data, lapakId, saleId) {
+      return data.keys().hasAll([
+          'id', 'lapakId', 'createdById', 'invoiceNumber', 'buyerWarehouseName', 'coffeeType',
+          'dispatchedWeightKg', 'warehouseWeightKg', 'weightVarianceKg',
+          'costPricePerKg', 'sellPricePerKg', 'totalRevenue', 'estimatedCost',
+          'netProfit', 'profitMarginPercent', 'date', 'paymentStatus',
+          'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'lapakId', 'createdById', 'createdByName', 'invoiceNumber', 'buyerWarehouseName', 'buyerWhatsApp',
+          'buyerPhone', 'coffeeType', 'dispatchedWeightKg', 'warehouseWeightKg', 'weightVarianceKg',
+          'costPricePerKg', 'sellPricePerKg', 'totalRevenue', 'estimatedCost', 'netProfit',
+          'profitMarginPercent', 'date', 'notes', 'paymentStatus', 'paymentMethod',
+          'dueDate', 'paidAt', 'createdAt', 'updatedAt'
+        ]) &&
+        data.id is string && data.id == saleId && isValidId(data.id) &&
+        data.lapakId is string && data.lapakId == lapakId && isValidId(data.lapakId) &&
+        data.createdById is string && isValidId(data.createdById) &&
+        isValidOptionalString(data, 'createdByName', 120) &&
+        data.invoiceNumber is string && data.invoiceNumber.size() >= 1 && data.invoiceNumber.size() <= 64 &&
+        data.buyerWarehouseName is string && data.buyerWarehouseName.size() >= 1 && data.buyerWarehouseName.size() <= 180 &&
+        isValidOptionalString(data, 'buyerWhatsApp', 40) &&
+        isValidOptionalString(data, 'buyerPhone', 40) &&
+        data.coffeeType is string && data.coffeeType.size() >= 1 && data.coffeeType.size() <= 120 &&
+        data.dispatchedWeightKg is number && data.dispatchedWeightKg > 0 &&
+        data.warehouseWeightKg is number && data.warehouseWeightKg > 0 &&
+        data.weightVarianceKg is number &&
+        data.costPricePerKg is number && data.costPricePerKg >= 0 &&
+        data.sellPricePerKg is number && data.sellPricePerKg >= 0 &&
+        data.totalRevenue is number && data.totalRevenue >= 0 &&
+        data.estimatedCost is number && data.estimatedCost >= 0 &&
+        data.netProfit is number &&
+        data.profitMarginPercent is number &&
+        data.date is string && data.date.size() >= 1 && data.date.size() <= 64 &&
+        isValidOptionalString(data, 'notes', 500) &&
+        data.paymentStatus in ['LUNAS', 'BELUM_LUNAS'] &&
+        (!('paymentMethod' in data) || data.paymentMethod in ['Transfer Bank', 'Tunai Langsung', 'Transfer Susulan (Piutang)']) &&
+        isValidOptionalString(data, 'dueDate', 32) &&
+        isValidOptionalString(data, 'paidAt', 64) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    // App Users Collection (RBAC: owner & kasir)
+    match /app_users/{userId} {
+      allow get: if isValidId(userId);
+      allow list: if resource.data.role in ['owner', 'kasir'];
+      allow create: if isValidId(userId) &&
+        isValidAppUser(incoming(), userId) &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time &&
+        (
+          userId in ['252500', '252501'] ||
+          ('createdById' in incoming() && isOwnerAppUser(incoming().createdById))
+        );
+      allow update: if isValidId(userId) &&
+        isValidAppUser(incoming(), userId) &&
+        incoming().id == existing().id &&
+        incoming().username == existing().username &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().createdAtDate == existing().createdAtDate &&
+        incoming().updatedAt == request.time &&
+        !(userId == '252500' && (incoming().role != 'owner' || incoming().isActive != true)) &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['fullName', 'role', 'isActive', 'passwordHash', 'salt', 'updatedAt']);
+      allow delete: if isValidId(userId) && userId != '252500' && existing().id == userId;
+    }
+
+    // Shared Lapak Workspace Collection
+    match /lapak/{lapakId} {
+      allow get: if isValidId(lapakId);
+      allow list: if false;
+      allow create: if isValidId(lapakId) &&
+        lapakId == 'main' &&
+        isValidLapakWorkspace(incoming(), lapakId) &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update, delete: if false;
+
+      // Coffee Purchases Subcollection
+      match /purchases/{purchaseId} {
+        allow get: if isValidId(lapakId) && isValidId(purchaseId) && existing().id == purchaseId;
+        allow list: if resource.data.lapakId == lapakId;
+        allow create: if isValidId(lapakId) && isValidId(purchaseId) &&
+          isValidPurchase(incoming(), lapakId, purchaseId) &&
+          incoming().createdAt == request.time &&
+          incoming().updatedAt == request.time &&
+          (!('sourceDepositId' in incoming()) || exists(/databases/$(database)/documents/lapak/$(lapakId)/deposits/$(incoming().sourceDepositId))) &&
+          hasParentLapak(lapakId) &&
+          isActiveAppUser(incoming().createdById);
+        allow update: if isValidId(lapakId) && isValidId(purchaseId) &&
+          isValidPurchase(incoming(), lapakId, purchaseId) &&
+          incoming().id == existing().id &&
+          incoming().lapakId == existing().lapakId &&
+          incoming().createdById == existing().createdById &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().updatedAt == request.time &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['notes', 'updatedAt']);
+        allow delete: if isValidId(lapakId) && isValidId(purchaseId) && existing().id == purchaseId;
+      }
+
+      // Coffee Deposits Subcollection (Titip Kopi Petani)
+      match /deposits/{depositId} {
+        allow get: if isValidId(lapakId) && isValidId(depositId) && existing().id == depositId;
+        allow list: if resource.data.lapakId == lapakId;
+        allow create: if isValidId(lapakId) && isValidId(depositId) &&
+          isValidDeposit(incoming(), lapakId, depositId) &&
+          incoming().remainingWeightKg == incoming().initialWeightKg &&
+          incoming().status == 'AKTIF' &&
+          incoming().createdAt == request.time &&
+          incoming().updatedAt == request.time &&
+          hasParentLapak(lapakId) &&
+          isActiveAppUser(incoming().createdById);
+        allow update: if isValidId(lapakId) && isValidId(depositId) &&
+          isValidDeposit(incoming(), lapakId, depositId) &&
+          existing().status == 'AKTIF' &&
+          incoming().id == existing().id &&
+          incoming().lapakId == existing().lapakId &&
+          incoming().createdById == existing().createdById &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().initialWeightKg == existing().initialWeightKg &&
+          incoming().remainingWeightKg < existing().remainingWeightKg &&
+          (
+            (incoming().remainingWeightKg == 0 && incoming().status == 'SELESAI') ||
+            (incoming().remainingWeightKg > 0 && incoming().status == 'AKTIF')
+          ) &&
+          incoming().updatedAt == request.time &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['remainingWeightKg', 'status', 'settlements', 'updatedAt']);
+        allow delete: if isValidId(lapakId) && isValidId(depositId) && existing().id == depositId;
+      }
+
+      // Warehouse Sales Subcollection
+      match /sales/{saleId} {
+        allow get: if isValidId(lapakId) && isValidId(saleId) && existing().id == saleId;
+        allow list: if resource.data.lapakId == lapakId;
+        allow create: if isValidId(lapakId) && isValidId(saleId) &&
+          isValidSale(incoming(), lapakId, saleId) &&
+          incoming().createdAt == request.time &&
+          incoming().updatedAt == request.time &&
+          hasParentLapak(lapakId) &&
+          isActiveAppUser(incoming().createdById);
+        allow update: if isValidId(lapakId) && isValidId(saleId) &&
+          isValidSale(incoming(), lapakId, saleId) &&
+          incoming().id == existing().id &&
+          incoming().lapakId == existing().lapakId &&
+          incoming().createdById == existing().createdById &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().updatedAt == request.time &&
+          existing().paymentStatus == 'BELUM_LUNAS' &&
+          incoming().paymentStatus == 'LUNAS' &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['paymentStatus', 'paidAt', 'updatedAt']);
+        allow delete: if isValidId(lapakId) && isValidId(saleId) && existing().id == saleId;
+      }
+    }
+  }
+}

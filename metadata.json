@@ -1,0 +1,8 @@
+{
+  "name": "Boss Kopi - Manajemen Gudang Pengepul Kopi",
+  "description": "Sistem aplikasi manajemen lapak dan gudang pengepul kopi mentah: pencatatan pembelian dari petani, inventori stok kopi, dan penjualan ke gudang pusat dengan kalkulasi margin keuntungan otomatis.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

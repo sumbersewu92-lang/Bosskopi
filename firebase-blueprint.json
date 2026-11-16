@@ -1,0 +1,519 @@
+{
+  "entities": {
+    "AppUser": {
+      "title": "AppUser",
+      "description": "Akun pengguna aplikasi Boss Kopi Sumber Sewu dengan kredensial tersimpan aman dan peran (owner/kasir).",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "ID unik pengguna sekaligus username login (contoh: 252500).",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "username": {
+          "type": "string",
+          "description": "Username / ID pengguna untuk login.",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "fullName": {
+          "type": "string",
+          "description": "Nama lengkap pengguna.",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "role": {
+          "type": "string",
+          "enum": ["owner", "kasir"],
+          "description": "Peran akses pengguna: owner (superadmin) atau kasir."
+        },
+        "passwordHash": {
+          "type": "string",
+          "description": "Hash SHA-256 ter-salt dari kata sandi pengguna.",
+          "minLength": 64,
+          "maxLength": 128
+        },
+        "salt": {
+          "type": "string",
+          "description": "Salt acak per pengguna untuk hashing kata sandi.",
+          "minLength": 8,
+          "maxLength": 64
+        },
+        "isActive": {
+          "type": "boolean",
+          "description": "Status aktif akun pengguna."
+        },
+        "createdById": {
+          "type": "string",
+          "description": "ID pengguna owner yang membuat akun ini.",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "createdAtDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Tanggal pembuatan akun (ISO string).",
+          "maxLength": 64
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp pembuatan dokumen."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp pembaruan dokumen."
+        }
+      },
+      "required": [
+        "id",
+        "username",
+        "fullName",
+        "role",
+        "passwordHash",
+        "salt",
+        "isActive",
+        "createdAtDate",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "LapakWorkspace": {
+      "title": "LapakWorkspace",
+      "description": "Dokumen induk gudang Boss Kopi Sumber Sewu untuk menyatukan seluruh transaksi operasional kopi.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "ID ruang kerja gudang.",
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "description": "Nama gudang / usaha.",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp pembuatan dokumen."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp pembaruan dokumen."
+        }
+      },
+      "required": ["id", "name", "createdAt", "updatedAt"]
+    },
+    "CoffeePurchase": {
+      "title": "CoffeePurchase",
+      "description": "Nota pembelian kopi bijian dari petani (pembelian langsung atau hasil putus harga dari titipan kopi).",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "ID dokumen pembelian.",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "lapakId": {
+          "type": "string",
+          "description": "ID ruang kerja gudang induk.",
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "createdById": {
+          "type": "string",
+          "description": "ID pengguna yang mencatat transaksi.",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "createdByName": {
+          "type": "string",
+          "description": "Nama lengkap petugas yang mencatat timbangan masuk.",
+          "maxLength": 120
+        },
+        "receiptNumber": {
+          "type": "string",
+          "description": "Nomor nota pembelian kopi.",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "farmerName": {
+          "type": "string",
+          "description": "Nama petani penjual kopi.",
+          "minLength": 1,
+          "maxLength": 150
+        },
+        "coffeeType": {
+          "type": "string",
+          "description": "Jenis stok kopi (Kopi Bijian).",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "weightKg": {
+          "type": "number",
+          "description": "Berat bersih kopi (kg)."
+        },
+        "moisturePercent": {
+          "type": "number",
+          "description": "Kadar air biji kopi (%)."
+        },
+        "buyPricePerKg": {
+          "type": "number",
+          "description": "Harga beli per kg (ditentukan Owner)."
+        },
+        "totalPayment": {
+          "type": "number",
+          "description": "Total pembayaran ke petani."
+        },
+        "sourceDepositId": {
+          "type": "string",
+          "description": "ID dokumen titip kopi asal jika pembelian berasal dari Putus Harga.",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "sourceDepositNumber": {
+          "type": "string",
+          "description": "Nomor tanda terima titip kopi asal jika berasal dari Putus Harga.",
+          "maxLength": 64
+        },
+        "date": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Tanggal transaksi pembelian (ISO string).",
+          "maxLength": 64
+        },
+        "notes": {
+          "type": "string",
+          "description": "Catatan kondisi kopi opsional.",
+          "maxLength": 500
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp pembuatan dokumen."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp pembaruan dokumen."
+        }
+      },
+      "required": [
+        "id",
+        "lapakId",
+        "createdById",
+        "receiptNumber",
+        "farmerName",
+        "coffeeType",
+        "weightKg",
+        "moisturePercent",
+        "buyPricePerKg",
+        "totalPayment",
+        "date",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "CoffeeDeposit": {
+      "title": "CoffeeDeposit",
+      "description": "Catatan titipan kopi bijian petani yang fisiknya dipisah dan dapat di-putus harga sebagian atau seluruhnya.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "ID dokumen titip kopi.",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "lapakId": {
+          "type": "string",
+          "description": "ID ruang kerja gudang induk.",
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "createdById": {
+          "type": "string",
+          "description": "ID pengguna yang mencatat titipan.",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "createdByName": {
+          "type": "string",
+          "description": "Nama lengkap petugas yang menerima titipan.",
+          "maxLength": 120
+        },
+        "depositNumber": {
+          "type": "string",
+          "description": "Nomor tanda terima titip kopi (contoh: TT-YYYYMMDD-XXX).",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "farmerName": {
+          "type": "string",
+          "description": "Nama petani pemilik kopi titipan.",
+          "minLength": 1,
+          "maxLength": 150
+        },
+        "coffeeType": {
+          "type": "string",
+          "description": "Jenis kopi titipan (Kopi Bijian).",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "initialWeightKg": {
+          "type": "number",
+          "description": "Berat bersih awal saat dititipkan (kg)."
+        },
+        "remainingWeightKg": {
+          "type": "number",
+          "description": "Sisa berat titipan yang belum diputus harga (kg)."
+        },
+        "moisturePercent": {
+          "type": "number",
+          "description": "Kadar air kopi saat dititipkan (%)."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["AKTIF", "SELESAI"],
+          "description": "Status titipan: AKTIF (masih ada sisa kg) atau SELESAI (0 kg tersisa)."
+        },
+        "settlements": {
+          "type": "array",
+          "description": "Riwayat pencairan Putus Harga sebagian atau seluruhnya (maksimal 50 item)."
+        },
+        "date": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Tanggal penerimaan titipan (ISO string).",
+          "maxLength": 64
+        },
+        "notes": {
+          "type": "string",
+          "description": "Catatan titipan opsional.",
+          "maxLength": 500
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp pembuatan dokumen."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp pembaruan dokumen."
+        }
+      },
+      "required": [
+        "id",
+        "lapakId",
+        "createdById",
+        "depositNumber",
+        "farmerName",
+        "coffeeType",
+        "initialWeightKg",
+        "remainingWeightKg",
+        "moisturePercent",
+        "status",
+        "date",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "WarehouseSale": {
+      "title": "WarehouseSale",
+      "description": "Nota pengiriman dan penjualan kopi bijian ke gudang pusat dengan pencatatan berat kirim vs timbang gudang (+/-).",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "ID dokumen penjualan.",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "lapakId": {
+          "type": "string",
+          "description": "ID ruang kerja gudang induk.",
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "createdById": {
+          "type": "string",
+          "description": "ID pengguna yang mencatat penjualan.",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "createdByName": {
+          "type": "string",
+          "description": "Nama lengkap petugas yang mencatat pengiriman.",
+          "maxLength": 120
+        },
+        "invoiceNumber": {
+          "type": "string",
+          "description": "Nomor surat jalan pengiriman ke gudang pusat.",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "buyerWarehouseName": {
+          "type": "string",
+          "description": "Nama gudang pusat atau pembeli tujuan.",
+          "minLength": 1,
+          "maxLength": 180
+        },
+        "buyerWhatsApp": {
+          "type": "string",
+          "description": "Nomor WhatsApp pembeli opsional.",
+          "maxLength": 40
+        },
+        "buyerPhone": {
+          "type": "string",
+          "description": "Nomor telepon pembeli opsional.",
+          "maxLength": 40
+        },
+        "coffeeType": {
+          "type": "string",
+          "description": "Jenis kopi yang dikirim (Kopi Bijian).",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "dispatchedWeightKg": {
+          "type": "number",
+          "description": "Berat keluar dari stok lapak (kg) yang memotong stok siap kirim."
+        },
+        "warehouseWeightKg": {
+          "type": "number",
+          "description": "Berat hasil timbang di gudang pusat (kg), bisa susut (-) atau lebih (+)."
+        },
+        "weightVarianceKg": {
+          "type": "number",
+          "description": "Selisih timbangan gudang pusat (warehouseWeightKg - dispatchedWeightKg)."
+        },
+        "costPricePerKg": {
+          "type": "number",
+          "description": "Modal rata-rata per kg saat pengiriman dicatat."
+        },
+        "sellPricePerKg": {
+          "type": "number",
+          "description": "Harga jual per kg di gudang pusat."
+        },
+        "totalRevenue": {
+          "type": "number",
+          "description": "Total omset penjualan (warehouseWeightKg * sellPricePerKg)."
+        },
+        "estimatedCost": {
+          "type": "number",
+          "description": "Total modal pokok stok keluar (dispatchedWeightKg * costPricePerKg)."
+        },
+        "netProfit": {
+          "type": "number",
+          "description": "Laba bersih penjualan (totalRevenue - estimatedCost)."
+        },
+        "profitMarginPercent": {
+          "type": "number",
+          "description": "Persentase margin keuntungan."
+        },
+        "date": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Tanggal pengiriman (ISO string).",
+          "maxLength": 64
+        },
+        "notes": {
+          "type": "string",
+          "description": "Catatan pengiriman opsional.",
+          "maxLength": 500
+        },
+        "paymentStatus": {
+          "type": "string",
+          "enum": ["LUNAS", "BELUM_LUNAS"],
+          "description": "Status pembayaran nota pengiriman."
+        },
+        "paymentMethod": {
+          "type": "string",
+          "enum": ["Transfer Bank", "Tunai Langsung", "Transfer Susulan (Piutang)"],
+          "description": "Metode pembayaran yang dipilih."
+        },
+        "dueDate": {
+          "type": "string",
+          "description": "Tanggal jatuh tempo piutang opsional.",
+          "maxLength": 32
+        },
+        "paidAt": {
+          "type": "string",
+          "description": "Waktu pelunasan pembayaran opsional.",
+          "maxLength": 64
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp pembuatan dokumen."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp pembaruan dokumen."
+        }
+      },
+      "required": [
+        "id",
+        "lapakId",
+        "createdById",
+        "invoiceNumber",
+        "buyerWarehouseName",
+        "coffeeType",
+        "dispatchedWeightKg",
+        "warehouseWeightKg",
+        "weightVarianceKg",
+        "costPricePerKg",
+        "sellPricePerKg",
+        "totalRevenue",
+        "estimatedCost",
+        "netProfit",
+        "profitMarginPercent",
+        "date",
+        "paymentStatus",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/app_users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/AppUser"
+      },
+      "description": "Koleksi akun pengguna aplikasi (owner/superadmin dan kasir)."
+    },
+    "/lapak/{lapakId}": {
+      "schema": {
+        "$ref": "#/entities/LapakWorkspace"
+      },
+      "description": "Dokumen induk gudang Boss Kopi Sumber Sewu."
+    },
+    "/lapak/{lapakId}/purchases/{purchaseId}": {
+      "schema": {
+        "$ref": "#/entities/CoffeePurchase"
+      },
+      "description": "Koleksi transaksi pembelian kopi bijian dari petani."
+    },
+    "/lapak/{lapakId}/deposits/{depositId}": {
+      "schema": {
+        "$ref": "#/entities/CoffeeDeposit"
+      },
+      "description": "Koleksi transaksi titip kopi petani sebelum putus harga."
+    },
+    "/lapak/{lapakId}/sales/{saleId}": {
+      "schema": {
+        "$ref": "#/entities/WarehouseSale"
+      },
+      "description": "Koleksi transaksi pengiriman dan penjualan kopi ke gudang pusat."
+    }
+  }
+}

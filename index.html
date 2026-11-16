@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>Boss Kopi Sumber Sewu - Sistem Jual Beli dan Management Kopi</title>
+    <meta name="description" content="Sistem Jual Beli dan Management Kopi bijian dari petani: pencatatan timbangan bersih dan kadar air, titip kopi dan putus harga, pengelolaan stok tunggal, serta pengiriman ke gudang pusat dengan selisih timbangan." />
+    <meta property="og:title" content="Boss Kopi Sumber Sewu - Sistem Jual Beli dan Management Kopi" />
+    <meta property="og:description" content="Sistem Jual Beli dan Management Kopi bijian dari petani: pencatatan timbangan bersih dan kadar air, titip kopi dan putus harga, pengelolaan stok tunggal, serta pengiriman ke gudang pusat dengan selisih timbangan." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+      window.__lapakLoadFailed = false;
+      window.__lapakLoadErrorDetail = '';
+      window.addEventListener(
+        'error',
+        function (e) {
+          var t = e && e.target;
+          if (t && t !== window && (t.tagName === 'SCRIPT' || t.tagName === 'LINK')) {
+            var src = t.src || t.href || '';
+            if (src.indexOf('fonts.googleapis.com') === -1) {
+              window.__lapakLoadFailed = true;
+              window.__lapakLoadErrorDetail = 'Gagal memuat file: ' + src;
+            }
+          } else if (e && e.message) {
+            window.__lapakLoadFailed = true;
+            window.__lapakLoadErrorDetail = String(e.message);
+          }
+        },
+        true
+      );
+      window.addEventListener('unhandledrejection', function (e) {
+        var root = document.getElementById('root');
+        if (root && root.childElementCount === 0 && e && e.reason) {
+          window.__lapakLoadFailed = true;
+          window.__lapakLoadErrorDetail = e.reason.message ? String(e.reason.message) : String(e.reason);
+        }
+      });
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <noscript>
+      <div style="font-family:system-ui,sans-serif;padding:24px;text-align:center;color:#1c1917;">
+        Aplikasi Boss Kopi Sumber Sewu memerlukan JavaScript aktif di browser Anda.
+      </div>
+    </noscript>
+    <script type="module" src="/src/main.tsx"></script>
+    <script>
+      window.setTimeout(function () {
+        var root = document.getElementById('root');
+        if (root && root.childElementCount === 0) {
+          var isMissingBuild =
+            window.__lapakLoadFailed ||
+            window.location.protocol === 'file:';
+          if (!isMissingBuild) {
+            return;
+          }
+          var detail = window.__lapakLoadErrorDetail
+            ? '<p style="font-size:11px;color:#78716c;background:#f5f5f4;border-radius:8px;padding:8px 10px;margin:0 0 14px;word-break:break-word;">' +
+              window.__lapakLoadErrorDetail.replace(/</g, '&lt;').replace(/>/g, '&gt;') +
+              '</p>'
+            : '';
+          root.innerHTML =
+            '<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:#FAF7F2;font-family:system-ui,sans-serif;">' +
+            '<div style="max-width:440px;background:#fff;border:1px solid #e7e5e4;border-radius:16px;padding:24px;text-align:center;color:#1c1917;">' +
+            '<h1 style="font-size:18px;font-weight:700;margin:0 0 8px;">Gagal Memuat Aplikasi</h1>' +
+            '<p style="font-size:13px;color:#57534e;line-height:1.5;margin:0 0 14px;">File build aplikasi tidak ditemukan atau gagal dijalankan. Jika Anda menggunakan GitHub Pages, pastikan <b>Settings → Pages → Source</b> diatur ke <b>GitHub Actions</b> (bukan Deploy from a branch).</p>' +
+            detail +
+            '<button onclick="window.location.reload()" style="padding:10px 16px;background:#432818;color:#fff;border:0;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;">Muat Ulang</button>' +
+            '</div></div>';
+        }
+      }, 2500);
+    </script>
+  </body>
+</html>
+
