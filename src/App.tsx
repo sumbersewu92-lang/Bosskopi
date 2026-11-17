@@ -749,6 +749,12 @@ export default function App() {
     const officerName = clampStr(userSession.fullName || userSession.username, 120);
 
     const dispatchedWeightKg = roundWeight(safeNum(newSaleData.dispatchedWeightKg));
+    if (dispatchedWeightKg <= 0 || dispatchedWeightKg > stockSummary.stockKg) {
+      setDbError(
+        `Berat keluar lapak (${dispatchedWeightKg} kg) tidak boleh melebihi total stok siap kirim (${stockSummary.stockKg} kg).`
+      );
+      return;
+    }
     const warehouseWeightKg = roundWeight(safeNum(newSaleData.warehouseWeightKg));
     const weightVarianceKg = roundWeight(warehouseWeightKg - dispatchedWeightKg);
     const costPricePerKg = Math.round(safeNum(newSaleData.costPricePerKg));

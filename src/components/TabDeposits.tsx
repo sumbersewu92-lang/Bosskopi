@@ -87,6 +87,48 @@ export const TabDeposits: React.FC<TabDepositsProps> = ({
     return Number.isFinite(parsed) && parsed >= 0 ? Math.round(parsed * 10) / 10 : NaN;
   })();
 
+  const handleMoistureChange = (rawVal: string) => {
+    if (rawVal === '') {
+      setMoisturePercent('');
+      return;
+    }
+
+    let cleaned = rawVal.replace(/[^0-9.,]/g, '');
+    if (!cleaned) {
+      setMoisturePercent('');
+      return;
+    }
+
+    if (cleaned.startsWith('.') || cleaned.startsWith(',')) {
+      cleaned = `0${cleaned}`;
+    }
+
+    const sepIndex = cleaned.search(/[.,]/);
+    if (sepIndex === -1) {
+      if (cleaned.length > 2) {
+        if (rawVal.length - moisturePercent.length > 1) {
+          setMoisturePercent(cleaned.slice(0, 2));
+        }
+        return;
+      }
+      setMoisturePercent(cleaned);
+      return;
+    }
+
+    const sepChar = cleaned[sepIndex];
+    const intPart = cleaned.slice(0, sepIndex).replace(/[.,]/g, '');
+    const decPart = cleaned.slice(sepIndex + 1).replace(/[.,]/g, '');
+
+    if (intPart.length > 2 || decPart.length > 1) {
+      if (rawVal.length - moisturePercent.length > 1) {
+        setMoisturePercent(`${intPart.slice(0, 2)}${sepChar}${decPart.slice(0, 1)}`);
+      }
+      return;
+    }
+
+    setMoisturePercent(`${intPart}${sepChar}${decPart}`);
+  };
+
   const handleSubmitDeposit = (e: React.FormEvent) => {
     e.preventDefault();
     setFormError('');
@@ -280,19 +322,21 @@ export const TabDeposits: React.FC<TabDepositsProps> = ({
                     <Droplets className="w-4 h-4" />
                   </div>
                   <input
-                    type="number"
-                    step="0.1"
-                    min="0"
-                    max="100"
+                    type="text"
+                    inputMode="decimal"
                     required
                     value={moisturePercent}
-                    onChange={(e) => setMoisturePercent(e.target.value)}
-                    placeholder="Contoh: 15.0"
-                    className="w-full h-[36px] pl-8 pr-7 text-sm bg-stone-50 border border-stone-200 rounded-lg font-mono tabular-nums focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#5C3A21]"
+                    onChange={(e) => handleMoistureChange(e.target.value)}
+                    placeholder="contoh: 18 %"
+                    className={`w-full h-[36px] pl-8 text-sm bg-stone-50 border border-stone-200 rounded-lg font-mono tabular-nums focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#5C3A21] ${
+                      moisturePercent ? 'pr-7' : 'pr-3'
+                    }`}
                   />
-                  <span className="absolute inset-y-0 right-2.5 flex items-center text-xs font-semibold text-stone-400 pointer-events-none">
-                    %
-                  </span>
+                  {moisturePercent && (
+                    <span className="absolute inset-y-0 right-2.5 flex items-center text-xs font-semibold text-stone-400 pointer-events-none">
+                      %
+                    </span>
+                  )}
                 </div>
               </div>
             </div>

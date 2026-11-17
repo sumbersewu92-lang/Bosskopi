@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Building2,
   Package,
@@ -61,6 +61,7 @@ export const TabStockAndSales: React.FC<TabStockAndSalesProps> = ({
   const [warehouseWeightInput, setWarehouseWeightInput] = useState<string>('');
   const [sellPriceInput, setSellPriceInput] = useState<string>('');
   const [formError, setFormError] = useState<string>('');
+  const [weightCapNotice, setWeightCapNotice] = useState<string>('');
 
   // Checkout Modal State
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState<boolean>(false);
@@ -86,9 +87,55 @@ export const TabStockAndSales: React.FC<TabStockAndSalesProps> = ({
     return Math.round(parsed * 100) / 100;
   };
 
+  const maxStockKg = Math.max(0, Math.round((stockSummary.stockKg || 0) * 100) / 100);
   const numDispatchedKg = parseWeight(dispatchedWeightInput);
   const numWarehouseKg = parseWeight(warehouseWeightInput);
   const numSellPrice = parseInt(sellPriceInput, 10) || 0;
+  const isOverStock = numDispatchedKg > maxStockKg;
+
+  useEffect(() => {
+    if (!dispatchedWeightInput) return;
+    if (maxStockKg <= 0) {
+      setDispatchedWeightInput('');
+      setWeightCapNotice('Berat keluar tidak boleh melebihi total stok siap kirim');
+    } else if (numDispatchedKg > maxStockKg) {
+      setDispatchedWeightInput(String(maxStockKg));
+      setWeightCapNotice('Berat keluar tidak boleh melebihi total stok siap kirim');
+    }
+  }, [maxStockKg, numDispatchedKg, dispatchedWeightInput]);
+
+  const handleDispatchedWeightChange = (rawVal: string) => {
+    setFormError('');
+    if (rawVal === '') {
+      setDispatchedWeightInput('');
+      setWeightCapNotice('');
+      return;
+    }
+
+    if (maxStockKg <= 0) {
+      setDispatchedWeightInput('');
+      setWeightCapNotice('Berat keluar tidak boleh melebihi total stok siap kirim');
+      return;
+    }
+
+    const normalized = rawVal.trim().replace(',', '.');
+    const parsed = parseFloat(normalized);
+
+    if (Number.isFinite(parsed) && parsed < 0) {
+      setDispatchedWeightInput('');
+      setWeightCapNotice('');
+      return;
+    }
+
+    if (Number.isFinite(parsed) && parsed > maxStockKg) {
+      setDispatchedWeightInput(String(maxStockKg));
+      setWeightCapNotice('Berat keluar tidak boleh melebihi total stok siap kirim');
+      return;
+    }
+
+    setDispatchedWeightInput(rawVal);
+    setWeightCapNotice('');
+  };
 
   const weightVarianceKg =
     numDispatchedKg > 0 && numWarehouseKg > 0
@@ -118,6 +165,7 @@ export const TabStockAndSales: React.FC<TabStockAndSalesProps> = ({
     if (!warehouseWeightInput) {
       setWarehouseWeightInput(val);
     }
+    setWeightCapNotice('');
     setFormError('');
   };
 
@@ -134,9 +182,7 @@ export const TabStockAndSales: React.FC<TabStockAndSalesProps> = ({
       return;
     }
     if (numDispatchedKg > stockSummary.stockKg) {
-      setFormError(
-        `Berat keluar (${formatNumber(numDispatchedKg)} kg) melebihi sisa stok siap kirim (${formatNumber(stockSummary.stockKg)} kg).`
-      );
+      setFormError('Berat keluar tidak boleh melebihi total stok siap kirim');
       return;
     }
     if (numWarehouseKg < 0.01) {
@@ -208,6 +254,7 @@ export const TabStockAndSales: React.FC<TabStockAndSalesProps> = ({
       setSellPriceInput('');
       setBuyerWarehouseName('');
       setBuyerWhatsApp('');
+      setWeightCapNotice('');
       setIsCheckoutModalOpen(false);
       restore();
     } finally {
@@ -390,17 +437,22 @@ export const TabStockAndSales: React.FC<TabStockAndSalesProps> = ({
                     type="number"
                     step="any"
                     min="0.01"
+                    max={maxStockKg > 0 ? maxStockKg : 0}
+                    disabled={maxStockKg <= 0}
                     value={dispatchedWeightInput}
-                    onChange={(e) => {
-                      setDispatchedWeightInput(e.target.value);
-                      setFormError('');
-                    }}
+                    onChange={(e) => handleDispatchedWeightChange(e.target.value)}
                     placeholder="Contoh: 1000"
-                    className="w-full h-[38px] pl-8 pr-3 text-sm bg-stone-50 border border-stone-200 rounded-lg font-mono tabular-nums focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#5C3A21]"
+                    className="w-full h-[38px] pl-8 pr-3 text-sm bg-stone-50 border border-stone-200 rounded-lg font-mono tabular-nums focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#5C3A21] disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                 </div>
-                <span className="text-[10.5px] text-stone-400 block mt-1">
-                  Memotong stok siap kirim (maks. {formatNumber(stockSummary.stockKg)} kg).
+                <span
+                  role={weightCapNotice ? 'alert' : undefined}
+                  aria-live="polite"
+                  className={`block mt-1 text-[10.5px] leading-[14px] min-h-[28px] sm:min-h-0 ${
+                    weightCapNotice ? 'text-rose-600 font-medium' : 'text-stone-400'
+                  }`}
+                >
+                  {weightCapNotice || `Memotong stok siap kirim (maks. ${formatNumber(stockSummary.stockKg)} kg).`}
                 </span>
               </div>
 
@@ -426,7 +478,7 @@ export const TabStockAndSales: React.FC<TabStockAndSalesProps> = ({
                     className="w-full h-[38px] pl-8 pr-3 text-sm bg-stone-50 border border-stone-200 rounded-lg font-mono tabular-nums focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#5C3A21]"
                   />
                 </div>
-                <span className="text-[10.5px] text-stone-400 block mt-1">
+                <span className="text-[10.5px] leading-[14px] text-stone-400 block mt-1">
                   Bisa lebih sedikit (susut -) atau lebih banyak (+) dari berat kirim.
                 </span>
               </div>
@@ -499,7 +551,7 @@ export const TabStockAndSales: React.FC<TabStockAndSalesProps> = ({
 
             <button
               type="submit"
-              disabled={stockSummary.stockKg <= 0}
+              disabled={stockSummary.stockKg <= 0 || isOverStock}
               className="w-full py-3 px-4 bg-[#432818] hover:bg-[#331D11] text-white font-semibold rounded-xl shadow-xs transition flex items-center justify-center gap-2 text-sm cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed"
             >
               <span>Lanjut ke Checkout Pengiriman</span>
